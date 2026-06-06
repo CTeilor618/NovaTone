@@ -2,7 +2,11 @@ import sys
 import json
 import re
 import verovio
-import cairosvg
+try:
+    import cairosvg
+    CAIRO_OK = True
+except Exception:
+    CAIRO_OK = False
 
 
 
@@ -181,6 +185,20 @@ def inject_fingerings_svg(svg_str, fingerings, show_numbers=True, show_note_name
         return svg_str
 
 
+
+def _svg_to_pdf_fallback(svg_bytes: bytes, output_path: str):
+    """Fallback para Windows usando svglib + reportlab"""
+    import tempfile, os
+    from svglib.svglib import svg2rlg
+    from reportlab.graphics import renderPDF
+    tmp = tempfile.NamedTemporaryFile(suffix=".svg", delete=False)
+    tmp.write(svg_bytes)
+    tmp.close()
+    drawing = svg2rlg(tmp.name)
+    os.unlink(tmp.name)
+    if drawing:
+        renderPDF.drawToFile(drawing, output_path)
+
 def export_pdf(xml_content, output_path, fingerings=[], show_numbers=True, show_note_names=True, show_zeros=False, font_size=18, show_diagrams=False, instrument="trompeta"):
     try:
         tk = verovio.toolkit()
@@ -193,14 +211,22 @@ def export_pdf(xml_content, output_path, fingerings=[], show_numbers=True, show_
                 svg = inject_fingerings_svg(svg, fingerings, show_numbers, show_note_names, show_zeros, font_size, show_diagrams, instrument)
             return svg
         if page_count == 1:
-            cairosvg.svg2pdf(bytestring=process_page(1).encode("utf-8"), write_to=output_path)
+            svg_data = process_page(1).encode("utf-8")
+        if CAIRO_OK:
+            cairosvg.svg2pdf(bytestring=svg_data, write_to=output_path)
+        else:
+            _svg_to_pdf_fallback(svg_data, output_path)
         else:
             import tempfile, os
             from pypdf import PdfWriter
             tmp_files = []
             for page in range(1, page_count + 1):
                 tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
-                cairosvg.svg2pdf(bytestring=process_page(page).encode("utf-8"), write_to=tmp.name)
+                svg_data = process_page(page).encode("utf-8")
+                if CAIRO_OK:
+                    cairosvg.svg2pdf(bytestring=svg_data, write_to=tmp.name)
+                else:
+                    _svg_to_pdf_fallback(svg_data, tmp.name)
                 tmp.close()
                 tmp_files.append(tmp.name)
             writer = PdfWriter()
