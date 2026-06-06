@@ -21,7 +21,8 @@ async fn run_python(command: String, data: String) -> Result<String, String> {
     let tmp_path = std::env::temp_dir().join("novatone_data.json");
     fs::write(&tmp_path, &data).map_err(|e| e.to_string())?;
 
-    let output = Command::new("python3")
+    let python_cmd = if cfg!(target_os = "windows") { "python" } else { "python3" };
+    let output = Command::new(python_cmd)
         .arg(&script_path)
         .arg(&command)
         .arg("--file")
