@@ -1,0 +1,25 @@
+:root {
+  --nt-bg:        #0B1020;
+  --nt-panel:     #12192E;
+  --nt-primary:   #38BDF8;
+  --nt-secondary: #8B5CF6;
+  --nt-success:   #22C55E;
+  --nt-warning:   #F59E0B;
+  --nt-error:     #EF4444;
+  --nt-text:      #E2E8F0;
+  --nt-muted:     #64748B;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--nt-bg);
+  color: var(--nt-text);
+  font-family: 'Inter', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
