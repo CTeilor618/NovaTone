@@ -202,7 +202,7 @@ def _svg_to_pdf_fallback(svg_bytes: bytes, output_path: str):
 def export_pdf(xml_content, output_path, fingerings=[], show_numbers=True, show_note_names=True, show_zeros=False, font_size=18, show_diagrams=False, instrument="trompeta"):
     try:
         tk = verovio.toolkit()
-        tk.setOptions({"pageWidth": 2159, "pageHeight": 2794, "scale": 30, "adjustPageHeight": False, "spacingSystem": 12, "spacingStaff": 8})
+        tk.setOptions({"pageWidth": 2159, "pageHeight": 2794, "scale": 30, "adjustPageHeight": False, "spacingSystem": 60, "spacingStaff": 20})
         tk.loadData(xml_content)
         page_count = tk.getPageCount()
         def process_page(page_num):
@@ -212,17 +212,17 @@ def export_pdf(xml_content, output_path, fingerings=[], show_numbers=True, show_
             return svg
         if page_count == 1:
             svg_data = process_page(1).encode("utf-8")
-        if CAIRO_OK:
-            cairosvg.svg2pdf(bytestring=svg_data, write_to=output_path)
-        else:
-            _svg_to_pdf_fallback(svg_data, output_path)
+            if CAIRO_OK:
+                cairosvg.svg2pdf(bytestring=svg_data, write_to=output_path)
+            else:
+                _svg_to_pdf_fallback(svg_data, output_path)
         else:
             import tempfile, os
             from pypdf import PdfWriter
             tmp_files = []
             for page in range(1, page_count + 1):
-                tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
                 svg_data = process_page(page).encode("utf-8")
+                tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
                 if CAIRO_OK:
                     cairosvg.svg2pdf(bytestring=svg_data, write_to=tmp.name)
                 else:
